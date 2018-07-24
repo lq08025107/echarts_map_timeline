@@ -44,6 +44,8 @@ var provinces = {
 
 var mydata;
 var citydata;
+
+//获取省级模拟数据
 function getValue(){
     
     $.ajax({
@@ -64,6 +66,37 @@ function getValue(){
 //获取全国各省数据
 getValue();
 
+function getLevels(){
+    var result;
+    $.ajax({
+        url: 'http://localhost:8080/levels',
+        async: false,
+        dataType: 'json',
+        success: function(data){
+            result = data;
+        },
+        error: function(){
+            console.log('error');
+        }
+    });
+    return result;
+}
+
+function getCompletion(){
+    var result;
+    $.ajax({
+        url: 'http://localhost:8080/completion',
+        async: false,
+        dataType: 'json',
+        success: function(data){
+            result = data;
+        },
+        error: function(){
+            console.log('error');
+        }
+    });
+    return result;
+}
 //直辖市和特别行政区-只有二级地图，没有三级地图
 var special = ["北京","天津","上海","重庆","香港","澳门"];
 var mapdata = [];
@@ -143,7 +176,7 @@ chart.on('click', function (params) {
 var timeByMonth = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];//timeline初始值
 var baseOption = {
     backgroundColor: '#000',
-    title : {
+    title : [{
         text: '全国警情数据统计',
         subtext: '',
         link:'',
@@ -161,6 +194,29 @@ var baseOption = {
             fontFamily:"Microsoft YaHei"
         }
     },
+    {
+        text: '设备巡检情况',
+        left: '8%',
+        top: '25%',
+        textStyle:{
+        color: '#fff',
+        fontSize:16,
+        fontWeight:'normal',
+        fontFamily:"Microsoft YaHei"
+    }
+    },
+    {
+        text: '综合警情统计',
+        left: '85%',
+        top: '25%',
+        textStyle:{
+        color: '#fff',
+        fontSize:16,
+        fontWeight:'normal',
+        fontFamily:"Microsoft YaHei"
+    }
+    }],
+
     timeline: {
         show: true,
         axisType: 'category',
@@ -207,7 +263,8 @@ var baseOption = {
         textStyle: {
             fontSize: '16',
             color:'#fff'
-        }
+        },
+        seriesIndex: 0
     },
     tooltip: {
         trigger: 'item',
@@ -228,8 +285,7 @@ mapOption.options = options;
 
     
 function renderMap(map,data){
-	//option.options.title.subtext = map;
-    //option.options.push(title.subtext, map);
+    var levels = getLevels();
     baseOption.series = [ 
 		{
             name: map,
@@ -265,9 +321,118 @@ function renderMap(map,data){
 	            }
 	        },
             data:data
-        }	
-    ];
+        },
 
+        //饼状图
+        {
+            name:'警情综合统计',
+            type:'pie',
+            radius : '20%',
+            center: [document.getElementById('main').offsetWidth - 165, 325],
+            //color : ['rgb(252,157,154)','rgb(249,205,173)','rgb(200,200,169)','rgb(131,175,155)'],
+            data:[
+                {value:levels['highest'], name:'最高级警情'},
+                {value:levels['high'], name:'高级警情'},
+                {value:levels['middle'], name:'中级警情'},
+                {value:levels['low'], name:'低级警情'}
+            ],
+            visualMap: false
+        },
+//        仪表盘
+        {
+            name:'完成率',
+            center:['12%', '45%'],
+            radius: '30%',
+            type:'gauge',
+            startAngle: 140,
+            endAngle : -140,
+            min: 0,                     // 最小值
+            max: 100,                   // 最大值
+            precision: 0,               // 小数精度，默认为0，无小数点
+            splitNumber: 10,             // 分割段数，默认为5
+            axisLine: {            // 坐标轴线
+                show: true,        // 默认显示，属性show控制显示与否
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: [[0.2, 'lightgreen'],[0.4, 'orange'],[0.8, 'skyblue'],[1, '#ff4500']], 
+                    width: 30
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                show: true,        // 属性show控制显示与否，默认不显示
+                splitNumber: 5,    // 每份split细分多少段
+                length :8,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: '#eee',
+                    width: 1,
+                    type: 'solid'
+                }
+            },
+            axisLabel: {           // 坐标轴文本标签，详见axis.axisLabel
+                show: true,
+                formatter: function(v){
+                    switch (v+''){
+                        case '10': return '弱';
+                        case '30': return '低';
+                        case '60': return '中';
+                        case '90': return '高';
+                        default: return '';
+                    }
+                },
+                // textStyle: {       // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                //     color: ''
+                // }
+            },
+            splitLine: {           // 分隔线
+                show: true,        // 默认显示，属性show控制显示与否
+                length :30,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: '#eee',
+                    width: 2,
+                    type: 'solid'
+                }
+            },
+            pointer : {
+                length : '80%',
+                width : 8,
+                color : 'auto'
+            },
+            title : {
+                show : true,
+                offsetCenter: ['-65%', -30],       // x, y，单位px
+                textStyle: {       // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                    color: 'red',
+                    fontSize : 30
+                }
+            },
+            detail : {
+                show : true,
+                backgroundColor: 'rgba(0,0,0,0)',
+                borderWidth: 0,
+                borderColor: '#ccc',
+                width: 100,
+                height: 40,
+                offsetCenter: ['-60%',0],       // x, y，单位px
+                formatter:'{value}%',
+                textStyle: {       // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                    color: 'auto',
+                    fontSize : 30
+                }
+            },
+            data:[{value: getCompletion(), name: '完成率'}]
+        }
+    ]
+
+    baseOption.color = ['red', 'green','yellow','blueviolet'];
+    var d = new Array();
+    for (var i = 0; i < data.length - 1; i++) {
+        d[i] = 0;
+        if(data[i].value != undefined){
+            d[i] = data[i].value;    
+        }
+    }
+
+    baseOption.visualMap.min = Math.min.apply(null, d);
+    baseOption.visualMap.max = Math.max.apply(null, d);
     //渲染地图
     chart.setOption(mapOption);
 }
