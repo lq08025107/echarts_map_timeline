@@ -176,6 +176,7 @@ chart.on('click', function (params) {
 var timeByMonth = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];//timeline初始值
 var baseOption = {
     backgroundColor: '#000',
+    //backgroundColor: 'rgba(0,0,0,0)',
     title : [{
         text: '全国警情数据统计',
         subtext: '',
